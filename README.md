@@ -1,4 +1,4 @@
-# Luxion Web
+# Luxion (Serverless Streaming Platform using GAS and Sheet DB with Admin Page, Integrated with Custom Scraper API)
 
 A modern, fast, and feature-rich front-end web application for an anime streaming platform. Built entirely with Vanilla JavaScript, HTML5, and CSS3, this project focuses on performance, simplicity, and an optimal user experience without relying on heavy frameworks.
 
@@ -49,7 +49,6 @@ The web application is fully static and can be deployed to platforms like **Clou
 ---
 
 _Copyright 2026 diyyo White | Licensed under MIT License_
-
 
 
 # Luxion Anime Scraper API
@@ -135,6 +134,44 @@ const allowedOrigins = [
   // 'http://localhost:5500' // Uncomment for local development
 ];
 ```
+
+## 🗄️ Google Apps Script Backend (Database API)
+
+Luxion also utilizes a Google Apps Script (`api/gas/code.gs`) serving as a serverless database backend and Admin REST API, leveraging Google Sheets as the storage layer.
+
+### 🌟 Key Features
+
+- **Serverless Google Sheets DB:** Stores Anime lists, Episodes, and Announcements.
+- **Auto-Archiving System:** Automatically archives old records into separate sheets (e.g., `Archive_Anime_1`) when the main sheet exceeds 5,000 rows to maintain high performance.
+- **Cloudflare Turnstile Integration:** Built-in bot protection that can verify Turnstile tokens before processing read/write operations.
+- **Admin Authentication:** Secure `POST` requests via Google OAuth2 `id_token` validation (restricted to a specific admin email).
+
+### 📡 Public Endpoints (GET)
+
+Data fetching operations via `doGet`:
+
+- `?action=getAll` - Fetches all anime series.
+- `?action=getAnime&id=<ID>` - Fetches a specific anime and its episode list.
+- `?action=getPage&page=1&limit=12` - Fetches paginated anime data.
+- `?action=getAllEpisodes` - Fetches all episodes.
+- `?action=getAnnouncement` - Fetches the active announcement.
+
+### 🔐 Admin Endpoints (POST)
+
+Data mutation operations via `doPost`. Requires an Admin Google `idToken` and optional `turnstileToken` in the JSON payload:
+
+- **Anime Management**: `addAnime`, `updateAnime`, `deleteAnime`, `deleteAnimeSeries`
+- **Episode Management**: `addEpisode`, `updateEpisode`, `deleteEpisode`
+- **Utility**: `auth`, `saveAnnouncement`, `bulkInsert`
+
+### ⚙️ GAS Setup
+
+1. Create a new Google Sheet.
+2. Open **Extensions > Apps Script** and paste the contents of `api/gas/code.gs`.
+3. Set Script Properties (optional):
+   - `REQUIRE_TURNSTILE`: Set to `1` to enforce bot protection.
+   - `TURNSTILE_SECRET_KEY`: Your Cloudflare Turnstile secret key.
+4. Deploy as a **Web App** (Execute as: Me, Access: Anyone).
 
 ## 🌐 Deployment
 
