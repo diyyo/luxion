@@ -1,0 +1,174 @@
+<!-- Copyright 2026 diyyo White | Licensed under MIT License -->
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Nonton anime streaming online gratis, subtitle Indonesia. Update terbaru setiap hari." />
+  <title>Luxion! - Home</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="../assets/img/luxion-fav.png" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+
+<body>
+
+  <!-- ═══════════════ TURNSTILE INTERSTITIAL ═══════════════ -->
+  <div id="tsOverlay" class="ts-overlay hidden">
+    <div class="ts-card">
+      <div class="ts-logo">
+        <img src="../assets/img/luxion-icon.png" alt="Luxion!" width="64" height="64" />
+      </div>
+      <h2 class="ts-title">Checking Your Browser</h2>
+      <p class="ts-subtitle">Checking your browser before accessing Luxion!</p>
+      <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE" data-callback="onTurnstileSuccess"></div>
+      <!-- <p class="ts-hint">Verifikasi ini hanya muncul sesekali (disimpan 1 jam).</p> -->
+    </div>
+  </div>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+
+      <!-- Left: Search -->
+      <div class="search-wrapper">
+        <div class="search-container">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input type="search" id="searchInput" placeholder="Cari anime..." autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+
+      <!-- Right: Logo -->
+      <a href="index.html" class="logo-link">
+        <div class="logo-icon">
+          <img src="../assets/img/luxion-icon.png" alt="Luxion!" width="20" height="20" />
+        </div>
+        <span class="logo-text">Luxion!</span>
+      </a>
+
+    </div>
+  </header>
+
+  <!-- ═══════════════ SEARCH OVERLAY ═══════════════ -->
+  <section id="searchResults" aria-live="polite">
+    <div class="search-results-header">
+      <p class="search-results-title">
+        Hasil untuk: <span id="searchQuery">—</span>
+      </p>
+      <button class="btn-close-search" id="closeSearch">Tutup</button>
+    </div>
+    <div class="search-results-grid" id="searchResultsGrid"></div>
+  </section>
+
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <main class="main-content" id="mainContent">
+
+    <!-- Home Sections Wrapper -->
+    <div id="homeSections">
+
+      <!-- Announcement Banner -->
+      <div id="homeAnnouncement" class="announcement-banner hidden"></div>
+
+      <!-- Section 1: Episode Terbaru -->
+      <section class="home-section" id="secLatestEps">
+        <div class="section-header">
+          <h2 class="section-title">Episode Terbaru</h2>
+          <button class="btn-view-more" data-view="latest-eps">View more <svg width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="m9 18 6-6-6-6" />
+            </svg></button>
+        </div>
+        <div class="anime-grid" id="gridLatestEps"></div>
+      </section>
+
+      <!-- Section 2: Anime Terbaru -->
+      <section class="home-section" id="secLatestAnime">
+        <div class="section-header">
+          <h2 class="section-title">Anime Terbaru</h2>
+          <button class="btn-view-more" data-view="latest-anime">View more <svg width="14" height="14"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="m9 18 6-6-6-6" />
+            </svg></button>
+        </div>
+        <div class="anime-grid" id="gridLatestAnime"></div>
+      </section>
+
+      <!-- Section 3: Airing -->
+      <section class="home-section" id="secAiring">
+        <div class="section-header">
+          <h2 class="section-title">Airing</h2>
+          <button class="btn-view-more" data-view="airing">View more <svg width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="m9 18 6-6-6-6" />
+            </svg></button>
+        </div>
+        <div class="anime-grid" id="gridAiring"></div>
+      </section>
+
+      <!-- Section 4: Finished -->
+      <section class="home-section" id="secFinished">
+        <div class="section-header">
+          <h2 class="section-title">Finished</h2>
+          <button class="btn-view-more" data-view="finished">View more <svg width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="m9 18 6-6-6-6" />
+            </svg></button>
+        </div>
+        <div class="anime-grid" id="gridFinished"></div>
+      </section>
+    </div>
+
+    <!-- Paged View Wrapper (Search / View More) -->
+    <div id="pagedView" class="hidden">
+      <div class="section-header">
+        <h2 class="section-title" id="pagedTitle">Semua Anime</h2>
+        <button class="btn-view-more back-btn" id="btnBackHome">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="m15 18-6-6 6-6" />
+          </svg> Kembali
+        </button>
+      </div>
+      <div class="anime-grid" id="animeGrid"></div>
+
+      <!-- Pagination -->
+      <nav class="pagination hidden" id="pagination" aria-label="Navigasi halaman">
+        <button class="page-btn" id="btnPrevPage" aria-label="Halaman sebelumnya">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <span class="page-info" id="pageInfo">Halaman 1</span>
+        <button class="page-btn" id="btnNextPage" aria-label="Halaman berikutnya">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Error state (hidden by default) -->
+    <div class="error-state hidden" id="errorState">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 8v4m0 4h.01" />
+      </svg>
+      <h3>Gagal Memuat Data</h3>
+      <p>Tidak dapat mengambil data dari database. Periksa koneksi internet atau coba lagi nanti.</p>
+      <button class="btn-primary" onclick="initHome()">Coba Lagi</button>
+    </div>
+  </main>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="site-footer">
+    This site does not store any files on it's server. All contents are provided by non-affiliated third parties.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

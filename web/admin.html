@@ -1,0 +1,783 @@
+<!-- Copyright 2026 diyyo White | Licensed under MIT License -->
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Luxion!</title>
+  <link rel="stylesheet" href="style.css"> <!-- Shared base styles -->
+  <link rel="stylesheet" href="admin.css"> <!-- Admin specific styles -->
+  <link rel="icon" href="../assets/img/luxion-fav.png">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body class="admin-body lock-scroll">
+
+  <!-- ═══════════════ AUTH OVERLAY ═══════════════ -->
+  <div id="authOverlay" class="auth-overlay active">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-icon">
+          <img src="../assets/img/luxion-icon.png" alt="Luxion!" width="20" height="20" />
+        </div>
+        <span class="logo-text">Luxion!</span>
+      </div>
+      <p class="auth-desc">Silakan login menggunakan Akun Google Anda untuk mengakses panel manajemen.</p>
+
+      <!-- Google Sign-In HTML API -->
+      <!-- data-client_id  -->
+      <div id="g_id_onload" data-client_id="YOUR_CLIENT_ID" data-context="signin" data-ux_mode="popup"
+        data-callback="handleCredentialResponse" data-auto_prompt="false">
+      </div>
+
+      <div class="g_id_signin" style="display: flex; justify-content: center; margin-bottom: 16px;" data-type="standard"
+        data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"
+        data-logo_alignment="left">
+      </div>
+
+      <div id="authError" class="auth-error hidden">Akses ditolak!</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TOAST CONTAINER ═══════════════ -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- ═══════════════ GLOBAL LOADER ═══════════════ -->
+  <div id="globalLoader" class="global-loader hidden">
+    <div class="loader-spinner" aria-label="Memuat..."></div>
+  </div>
+
+  <!-- ═══════════════ GLOBAL PROGRESS OVERLAY ═══════════════ -->
+  <div id="globalProgressOverlay" class="global-progress-overlay hidden">
+    <div class="progress-overlay-card">
+      <div class="progress-spinner">
+        <svg viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="20"></circle>
+        </svg>
+      </div>
+      <h3 id="globalProgressTitle">Menyimpan Episode...</h3>
+      <p id="globalProgressText">Mempersiapkan data (0 dari 0)</p>
+      <div class="progress-bar-container">
+        <div id="globalProgressBar" class="progress-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DASHBOARD LAYOUT ═══════════════ -->
+  <div class="admin-layout hidden" id="adminLayout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="logo-link" target="_blank" title="Buka website utama">
+          <div class="logo-icon">
+            <img src="../assets/img/luxion-icon.png" alt="Luxion!" width="20" height="20" />
+          </div>
+          <span class="logo-text">Luxion! Panel</span>
+        </a>
+        <button class="btn-menu d-md-none" id="closeSidebar" aria-label="Tutup menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-view="animeList">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          Kelola Anime
+        </button>
+        <button class="nav-btn" data-view="episodeList">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          Kelola Episode
+        </button>
+
+        <button class="nav-btn" data-view="announcementList">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Kelola Pengumuman
+        </button>
+
+        <button type="button" class="nav-btn" id="btnBulkApi" style="margin-top:20px; color: var(--text-secondary);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+            <polyline points="13 2 13 9 20 9" />
+            <line x1="12" y1="13" x2="12" y2="19" />
+            <line x1="9" y1="16" x2="15" y2="16" />
+          </svg>
+          Bulk via API
+        </button>
+
+        <button class="nav-btn" data-view="bulkInsert" style="margin-top:4px; color: var(--text-secondary);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Bulk Insert
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-btn btn-danger" id="btnLogout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <button class="btn-menu d-md-none" id="openSidebar" aria-label="Buka menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <h1 class="topbar-title" id="topbarTitle">Kelola Anime</h1>
+
+        <div class="topbar-actions">
+          <button class="btn-primary btn-sm" id="btnRefresh" title="Refresh Data">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+          </button>
+          <button class="btn-primary btn-sm" id="btnAddItem">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Tambah Baru
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-content-inner">
+
+        <!-- Search Bar (Shared) -->
+        <div class="admin-search-bar" id="adminSearchBarArea">
+          <div class="search-container" style="max-width:400px; margin-bottom:16px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input type="search" id="adminSearchInput" placeholder="Cari data..." autocomplete="off">
+          </div>
+        </div>
+
+        <!-- View: Anime List -->
+        <div class="admin-view active" id="viewAnimeList">
+          <div class="bulk-toolbar hidden" id="animeBulkToolbar">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="selectAllAnime">
+              <span class="checkmark"></span>
+              Pilih Semua
+            </label>
+            <button class="btn-primary btn-sm" id="btnDeleteSelectedAnime" style="margin-left:auto;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Hapus Terpilih
+            </button>
+          </div>
+          <!-- DATA GRID -->
+          <div id="animeCardContainer" class="card-grid"></div>
+          <p id="animeEmptyState" class="empty-state hidden">Tidak ada data anime.</p>
+          <div id="animePagination" class="pagination-nav hidden"></div>
+        </div>
+
+        <!-- View: Episode List -->
+        <div class="admin-view" id="viewEpisodeList">
+          <div class="filter-bar">
+            <select id="filterAnimeId" class="admin-select" style="max-width:300px; margin-bottom:16px;">
+              <option value="">Semua Anime</option>
+              <!-- Options populated via JS -->
+            </select>
+          </div>
+
+          <div class="bulk-toolbar hidden" id="epBulkToolbar">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="selectAllEps">
+              <span class="checkmark"></span>
+              Pilih Semua
+            </label>
+            <button class="btn-primary btn-sm" id="btnDeleteSelectedEps" style="margin-left:auto;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Hapus Terpilih
+            </button>
+          </div>
+
+          <!-- DATA GRID -->
+          <div id="epCardContainer" class="card-grid"></div>
+          <p id="epEmptyState" class="empty-state hidden">Tidak ada data episode.</p>
+          <div id="epPagination" class="pagination-nav hidden"></div>
+        </div>
+
+        <!-- View: Bulk Insert -->
+        <div class="admin-view" id="viewBulkInsert">
+          <div class="bulk-container">
+            <h2>Bulk Insert Data</h2>
+            <p class="text-muted" style="margin-bottom:20px;">Paste data mentah (TSV/CSV) langsung dari Excel atau
+              Spreadsheet ke area teks di bawah ini. Pemisah antar kolom disarankan berupa karakter <code>TAB</code>.
+            </p>
+
+            <div class="form-group">
+              <label>Pilih Target Tabel</label>
+              <select id="bulkTargetTable" class="admin-input">
+                <option value="Anime">Tabel: Anime (11 Kolom)</option>
+                <option value="Episodes">Tabel: Episodes (11 Kolom)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label>Paste Data Excel / CSV di sini (tanpa baris Header):</label>
+              <textarea id="bulkDataInput" class="admin-input bulk-textarea"
+                placeholder="Kolom1  Kolom2  Kolom3..."></textarea>
+            </div>
+
+            <button class="btn-primary" id="btnProcessBulk"
+              style="margin-top:16px; width:100%; justify-content:center;">
+              Validasi & Upload
+            </button>
+
+            <div id="bulkErrorLog" class="form-error hidden" style="margin-top:16px;"></div>
+          </div>
+        </div>
+
+        <!-- View: Announcement -->
+        <div class="admin-view" id="viewAnnouncementList">
+          <div class="bulk-container">
+            <h2>Pengaturan Pengumuman</h2>
+            <p class="text-muted" style="margin-bottom:20px;">Atur pesan pengumuman yang muncul di halaman beranda.</p>
+
+            <div class="form-group" style="margin-bottom:16px;">
+              <label for="announcementStatus">Status Pengumuman</label>
+              <select id="announcementStatus" class="admin-select" style="max-width:200px;">
+                <option value="1">Aktif</option>
+                <option value="0">Tidak Aktif</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+              <label for="announcementType">Tipe (Warna)</label>
+              <select id="announcementType" class="admin-select" style="max-width:200px;">
+                <option value="info">Info (Biru)</option>
+                <option value="success">Success (Hijau)</option>
+                <option value="warning">Warning (Kuning)</option>
+                <option value="danger">Danger (Merah)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+              <label for="announcementMessage">Isi Pesan Pengumuman</label>
+              <textarea id="announcementMessage" class="admin-input bulk-textarea" style="min-height:100px;"
+                placeholder="Ketik pesan pengumuman..."></textarea>
+            </div>
+
+            <button class="btn-primary" id="btnSaveAnnouncement" style="margin-top:16px;">
+              Simpan Pengaturan
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══════════════ MODALS ═══════════════ -->
+  <!-- Modal: Form Anime -->
+  <div class="modal-overlay" id="modalAnimeForm">
+    <div class="modal-sheet modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title" id="animeModalTitle">Tambah Anime</h2>
+        <button class="modal-close" id="closeAnimeModal"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- JIKAN AUTOFILL BAR -->
+        <div class="autofill-bar">
+          <input type="text" id="jikanSearchStr" class="admin-input" placeholder="Cari di MyAnimeList untuk autofill..."
+            autocomplete="off">
+          <button type="button" class="btn-primary" id="btnJikanSearch" style="flex-shrink:0;">Cari</button>
+        </div>
+        <div id="jikanResults" class="jikan-results hidden"></div>
+        <div id="jikanHelperText" style="font-size:12px; color:var(--primary); margin-bottom:16px; display:none;"></div>
+
+        <form id="formAnime" class="admin-form">
+          <input type="hidden" id="actionAnime" value="addAnime">
+          <!-- original_id stores the ID when editing, because admin might change the ID field -->
+          <input type="hidden" id="originalAnimeId" value="">
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="anime_id">ID Anime (Unik) <span style="color:var(--primary)">*</span></label>
+              <input type="text" id="anime_id" class="admin-input" required>
+            </div>
+            <div class="form-group">
+              <label for="anime_status">Status</label>
+              <select id="anime_status" class="admin-input">
+                <option value="Airing">Airing</option>
+                <option value="Finished">Finished</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="anime_title">Judul Utama <span style="color:var(--primary)">*</span></label>
+            <input type="text" id="anime_title" class="admin-input" required>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="anime_title_en">Judul Inggris</label>
+              <input type="text" id="anime_title_en" class="admin-input">
+            </div>
+            <div class="form-group">
+              <label for="anime_title_alt">Judul Alternatif (Synonyms)</label>
+              <input type="text" id="anime_title_alt" class="admin-input">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="anime_cover">URL Cover / Poster (Rasio 225x350) <span
+                  style="color:var(--primary)">*</span></label>
+              <input type="url" id="anime_cover" class="admin-input" required>
+            </div>
+            <div class="form-group">
+              <label for="anime_genre">Genre (pisahkan dengan koma)</label>
+              <input type="text" id="anime_genre" class="admin-input" placeholder="Action, Adventure, Comedy">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="anime_synopsis">Sinopsis</label>
+            <textarea id="anime_synopsis" class="admin-input" rows="5"></textarea>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="anime_episodes">Total Episode Tayang</label>
+              <input type="number" id="anime_episodes" class="admin-input" placeholder="Misal: 12">
+            </div>
+            <div class="form-group">
+              <label for="anime_uploader">Nama Uploader</label>
+              <input type="text" id="anime_uploader" class="admin-input" value="diyyo">
+            </div>
+          </div>
+
+          <div class="form-group" style="display:none;">
+            <input type="text" id="anime_date" class="admin-input">
+          </div>
+
+          <div class="form-error hidden" id="animeFormError">Harap isi kolom yang diwajibkan.</div>
+
+          <div class="modal-actions" style="margin-top:20px;">
+            <button type="button" class="btn-secondary"
+              onclick="document.getElementById('closeAnimeModal').click()">Batal</button>
+            <button type="submit" class="btn-primary" id="btnSaveAnime">Simpan Anime</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Form Episode -->
+  <div class="modal-overlay" id="modalEpForm">
+    <div class="modal-sheet modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title" id="epModalTitle">Tambah Episode</h2>
+        <button class="modal-close" id="closeEpModal"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- EPISODE API: Ambil Server via Cari Anime -->
+        <div class="form-group" style="margin-bottom:6px;">
+          <label>Ambil Data Server via API</label>
+          <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
+            <select id="epApiSource" class="admin-select" style="flex-shrink:0; width:140px;">
+              <option value="samehadaku">Samehadaku</option>
+              <option value="animeindo">Animeindo</option>
+            </select>
+            <input type="text" id="epApiSearchStr" class="admin-input" placeholder="Cari anime untuk ambil server..."
+              autocomplete="off" style="flex:1;">
+            <button type="button" class="btn-primary" id="btnEpApiSearch"
+              style="flex-shrink:0; width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:8px;"
+              title="Cari anime">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
+          </div>
+          <div id="epApiSearchResults" class="jikan-results hidden" style="max-height:180px;"></div>
+          <div id="epApiSelectedInfo" class="hidden"
+            style="font-size:12px; color:#2eac68; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span id="epApiSelectedTitle">-</span>
+            <button type="button" id="btnEpApiClear"
+              style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:11px;padding:0;">[ganti]</button>
+          </div>
+        </div>
+        <div id="epApiHelperText" style="font-size:12px; color:var(--primary); margin-bottom:16px; display:none;"></div>
+
+        <!-- Jikan helper elements (hidden, reused for Import Judul) -->
+        <div id="epJikanResults" class="jikan-results hidden"></div>
+        <div id="epJikanHelperText" style="font-size:12px; color:var(--primary); margin-bottom:16px; display:none;">
+        </div>
+
+        <form id="formEpisode" class="admin-form">
+          <input type="hidden" id="actionEp" value="addEpisode">
+          <!-- original stores the row identifier when updating (needs both anime_id and ep_number to locate) -->
+          <input type="hidden" id="originalEpAnimeId" value="">
+          <input type="hidden" id="originalEpNumber" value="">
+          <!-- stores the resolved episode link from anime search -->
+          <input type="hidden" id="epApiResolvedLink" value="">
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="ep_anime_id">Anime Induk (ID) <span style="color:var(--primary)">*</span></label>
+              <select id="ep_anime_id" class="admin-input" required>
+                <!-- Options populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="ep_number">Nomor Episode <span style="color:var(--primary)">*</span></label>
+              <input type="number" id="ep_number" class="admin-input" required step="0.5" placeholder="Misal: 1">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="ep_title">Judul Episode Khusus (Opsional)</label>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="text" id="ep_title" class="admin-input" style="flex:1;">
+              <button type="button" class="btn-import" id="btnEpJikanSearch" title="Import judul dari MyAnimeList"
+                style="flex-shrink:0; width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+
+          <!-- Server 1 -->
+          <div class="server-group border-box">
+            <h4>Server 1 (Utama) <span style="color:var(--primary)">*</span></h4>
+            <div class="form-group hidden" id="ep_s1_select_group" style="margin-top:8px;">
+              <label>Pilih dari hasil scrape API:</label>
+              <select class="admin-select" id="ep_s1_select" onchange="epFormServerSelectChange(this, 1)">
+                <option value="">- Manual -</option>
+              </select>
+            </div>
+            <div class="form-grid" style="margin-top:10px;">
+              <div class="form-group">
+                <input type="text" id="ep_s1_name" class="admin-input" placeholder="Nama Server (ex: GDrive)"
+                  value="Server 1" required>
+              </div>
+              <div class="form-group">
+                <input type="url" id="ep_s1_url" class="admin-input" placeholder="URL Iframe Player" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Server 2 -->
+          <div class="server-group border-box">
+            <h4>Server 2 (Cadangan)</h4>
+            <div class="form-group hidden" id="ep_s2_select_group" style="margin-top:8px;">
+              <label>Pilih dari hasil scrape API:</label>
+              <select class="admin-select" id="ep_s2_select" onchange="epFormServerSelectChange(this, 2)">
+                <option value="">- Manual -</option>
+              </select>
+            </div>
+            <div class="form-grid" style="margin-top:10px;">
+              <div class="form-group">
+                <input type="text" id="ep_s2_name" class="admin-input" placeholder="Nama Server (ex: DoodStream)"
+                  value="Server 2">
+              </div>
+              <div class="form-group">
+                <input type="url" id="ep_s2_url" class="admin-input" placeholder="URL Iframe Player">
+              </div>
+            </div>
+          </div>
+
+          <!-- Server 3 -->
+          <div class="server-group border-box">
+            <h4>Server 3 (Cadangan)</h4>
+            <div class="form-group hidden" id="ep_s3_select_group" style="margin-top:8px;">
+              <label>Pilih dari hasil scrape API:</label>
+              <select class="admin-select" id="ep_s3_select" onchange="epFormServerSelectChange(this, 3)">
+                <option value="">- Manual -</option>
+              </select>
+            </div>
+            <div class="form-grid" style="margin-top:10px;">
+              <div class="form-group">
+                <input type="text" id="ep_s3_name" class="admin-input" placeholder="Nama Server" value="Server 3">
+              </div>
+              <div class="form-group">
+                <input type="url" id="ep_s3_url" class="admin-input" placeholder="URL Iframe Player">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="display:none;">
+            <input type="text" id="ep_uploader" class="admin-input" value="diyyo">
+            <input type="text" id="ep_date" class="admin-input">
+          </div>
+
+          <div class="form-error hidden" id="epFormError">Harap isi kolom yang diwajibkan minimal Server 1.</div>
+
+          <div class="modal-actions" style="margin-top:20px;">
+            <button type="button" class="btn-secondary"
+              onclick="document.getElementById('closeEpModal').click()">Batal</button>
+            <button type="submit" class="btn-primary" id="btnSaveEp">Simpan Episode</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL: BULK ADD VIA API (Step 1: Search & Config) ═══════════════ -->
+  <div class="modal-overlay" id="modalBulkApi">
+    <div class="modal-sheet modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">Bulk Add Episode via API</h2>
+        <button class="modal-close" id="closeBulkApiModal">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Step 1: Search Anime from API -->
+        <div class="form-group" style="margin-bottom:6px;">
+          <label>Sumber API</label>
+          <select id="bulkApiSource" class="admin-select" style="margin-bottom:12px;">
+            <option value="samehadaku">Samehadaku</option>
+            <option value="animeindo">Animeindo</option>
+          </select>
+
+          <label>Cari Anime via API</label>
+          <div class="autofill-bar">
+            <input type="text" id="bulkApiSearchStr" class="admin-input" placeholder="Ketik judul anime..."
+              autocomplete="off">
+            <button type="button" class="btn-primary" id="btnBulkApiSearch" style="flex-shrink:0;">Cari</button>
+          </div>
+        </div>
+
+        <!-- Search Results -->
+        <div id="bulkApiResults" class="jikan-results hidden"></div>
+        <div id="bulkApiHelperText"
+          style="font-size:12px; color:var(--text-secondary); margin-bottom:16px; display:none;"></div>
+
+        <!-- Selected Anime Info -->
+        <div id="bulkApiSelectedInfo" class="bulk-selected-info hidden">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span id="bulkApiSelectedTitle">-</span>
+        </div>
+
+        <hr style="border-color:var(--border-strong); margin:16px 0;">
+
+        <!-- Step 2: Target Anime ID in DB -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label for="bulkApiTargetAnimeId">Assign Episode ke Anime ID (di Database)</label>
+          <select id="bulkApiTargetAnimeId" class="admin-select" style="margin-bottom:6px;">
+            <!-- Populated dynamically from animeDataList -->
+          </select>
+        </div>
+
+        <!-- Step 3: Select Specific Episodes to Scrape -->
+        <div class="form-group" id="bulkApiEpisodeSelectGroup" style="margin-bottom:16px; display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Pilih Episode yang akan Ditarik <span id="bulkApiEpisodeCount"
+                style="color:var(--text-muted);font-weight:normal;"></span></label>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-sm btn-secondary" style="padding:4px 8px; font-size:11px;"
+                onclick="selectAllEpisodes(true)">Pilih Semua</button>
+              <button type="button" class="btn-sm btn-secondary" style="padding:4px 8px; font-size:11px;"
+                onclick="selectAllEpisodes(false)">Hapus Pilihan</button>
+            </div>
+          </div>
+          <div style="position:relative;">
+            <div id="bulkApiEpisodeList" class="admin-input"
+              style="height:200px; overflow-y:auto; padding:8px; margin-top:6px; background:var(--bg-elevated); border:1px solid var(--border-strong); border-radius:var(--radius-sm); display:flex; flex-direction:column; gap:4px;">
+              <!-- Checkboxes populated dynamically -->
+            </div>
+            <div id="bulkApiEpisodeLoading" class="bulk-ep-loading hidden">
+              <svg width="24" height="24" viewBox="0 0 50 50" class="loader-spinner"
+                style="border-width:2px; width:24px; height:24px; border-top-color:var(--primary);"></svg>
+            </div>
+          </div>
+          <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">Klik/tap pada masing-masing episode untuk
+            memilih atau menghapus dari antrean.</p>
+        </div>
+
+        <!-- Progress Area -->
+        <div id="bulkApiProgressWrap" class="bulk-progress-wrap hidden">
+          <p id="bulkApiStatusText" class="bulk-status-text">Mempersiapkan...</p>
+          <div class="bulk-progress-track">
+            <div class="bulk-progress-bar" id="bulkApiProgressBar" style="width:0%"></div>
+          </div>
+          <p id="bulkApiProgressCount"
+            style="font-size:11px; color:var(--text-muted); margin-top:6px; text-align:right;">0 / 0</p>
+        </div>
+
+        <div class="modal-actions" style="margin-top:20px;">
+          <button type="button" class="btn-secondary"
+            onclick="document.getElementById('closeBulkApiModal').click()">Batal</button>
+          <button type="button" class="btn-primary" id="btnStartBulkFetch">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Ambil Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL: BULK REVIEW & SAVE (Step 2: Review before saving) ═══════════════ -->
+  <div class="modal-overlay" id="modalBulkReview">
+    <div class="modal-sheet modal-xl">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Review & Simpan Episode</h2>
+          <p style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Periksa data hasil scraping. Anda
+            dapat mengedit sebelum menyimpan.</p>
+        </div>
+        <button class="modal-close" id="closeBulkReviewModal">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <!-- Control Bar: Sync & Import Tools -->
+      <div class="bulk-review-controls">
+        <div class="bulk-review-controls-left">
+          <button type="button" class="btn-sync" id="btnCheckSync">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M23 4v6h-6" />
+              <path d="M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            Cek Sinkronisasi
+          </button>
+          <button type="button" class="btn-import" id="btnImportTitles">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Import Judul
+          </button>
+        </div>
+        <div id="syncStatusLabel" class="sync-status-label"></div>
+      </div>
+
+      <!-- Import Judul: Inline Jikan Search Panel -->
+      <div id="importSearchPanel" class="import-search-panel hidden">
+        <div class="import-search-bar">
+          <input type="text" id="importSearchStr" class="admin-input" placeholder="Cari nama anime di MyAnimeList..."
+            autocomplete="off">
+          <button type="button" class="btn-primary btn-sm" id="btnImportSearch">Cari</button>
+        </div>
+        <div id="importSearchHelper" class="import-search-helper"></div>
+        <div id="importSearchResults" class="jikan-results hidden"></div>
+      </div>
+
+      <div class="modal-body" style="padding:0;">
+        <div class="bulk-review-table-wrap">
+          <table class="bulk-review-table" id="bulkReviewTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>No.Ep</th>
+                <th>Judul Episode</th>
+                <th>Server 1 — Utama (1080p &rsaquo; 720p)</th>
+                <th>Server 2 — Cadangan (720p &rsaquo; 480p)</th>
+                <th>Server 3 — Cadangan (480p &rsaquo; lainnya)</th>
+              </tr>
+            </thead>
+            <tbody id="bulkReviewTbody">
+              <!-- Rows rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: flex-end;">
+        <div style="display:flex; gap:12px; flex-shrink:0;">
+          <button type="button" class="btn-secondary"
+            onclick="document.getElementById('closeBulkReviewModal').click()">Batal</button>
+          <button type="button" class="btn-primary" id="btnSaveBulkEpisodes">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Simpan ke DB
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Confirm / Alert -->
+  <div class="modal-overlay" id="modalConfirm" style="z-index: 200000;">
+    <div class="modal-sheet" style="max-width: 400px; text-align: center; padding: 30px 24px; position:relative;">
+      <div id="confirmIcon" style="margin-bottom: 20px; color: var(--primary);">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3 id="confirmTitle" style="font-size: 20px; color: var(--text-primary); margin-bottom: 12px; font-weight: 700;">
+        Konfirmasi</h3>
+      <p id="confirmMessage"
+        style="font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.6;"></p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button type="button" class="btn-secondary" id="btnConfirmCancel"
+          style="flex: 1; padding: 14px; font-size: 15px;">Batal</button>
+        <button type="button" class="btn-primary" id="btnConfirmOk" style="flex: 1; padding: 14px; font-size: 15px;">Ya,
+          Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+
+</html>

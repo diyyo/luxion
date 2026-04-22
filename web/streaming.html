@@ -1,0 +1,292 @@
+<!-- Copyright 2026 diyyo White | Licensed under MIT License -->
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Nonton episode anime streaming online gratis, subtitle Indonesia." />
+  <title>Streaming — Luxion!</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="../assets/img/luxion-fav.png" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+</head>
+
+<body>
+
+  <!-- ═══════════════ TURNSTILE INTERSTITIAL ═══════════════ -->
+  <div id="tsOverlay" class="ts-overlay hidden">
+    <div class="ts-card">
+      <div class="ts-logo">
+        <img src="../assets/img/luxion-icon.png" alt="Luxion!" width="64" height="64" />
+      </div>
+      <h2 class="ts-title">Checking Your Browser</h2>
+      <p class="ts-subtitle">Checking your browser before accessing Luxion!</p>
+      <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE" data-callback="onTurnstileSuccess"></div>
+      <!-- <p class="ts-hint">Verifikasi ini hanya muncul sesekali (disimpan 1 jam).</p> -->
+    </div>
+  </div>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+
+      <!-- Left: Search -->
+      <div class="search-wrapper">
+        <div class="search-container">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input type="search" id="searchInput" placeholder="Cari anime…" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+
+      <!-- Right: Logo -->
+      <a href="index.html" class="logo-link">
+        <div class="logo-icon">
+          <img src="../assets/img/luxion-icon.png" alt="Luxion!" width="20" height="20" />
+        </div>
+        <span class="logo-text">Luxion!</span>
+      </a>
+
+    </div>
+  </header>
+
+  <!-- ═══════════════ SEARCH OVERLAY ═══════════════ -->
+  <section id="searchResults" aria-live="polite">
+    <div class="search-results-header">
+      <p class="search-results-title">
+        Hasil untuk: <span id="searchQuery">—</span>
+      </p>
+      <button class="btn-close-search" id="closeSearch">Tutup</button>
+    </div>
+    <div class="search-results-grid" id="searchResultsGrid"></div>
+  </section>
+
+  <!-- ═══════════════ STREAMING LAYOUT ═══════════════ -->
+  <main id="streamMain" class="stream-layout">
+
+    <!-- Loading spinner -->
+    <div id="streamSkeleton"
+      style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:16px;">
+      <div class="loader-spinner"></div>
+      <p class="loader-text">Memuat konten…</p>
+    </div>
+
+
+    <!-- Real content (hidden until data loads) -->
+    <div id="streamContent" class="hidden">
+
+      <!-- ▸ Video meta -->
+      <div class="video-section">
+        <div class="video-meta">
+          <h1 class="video-title" id="videoTitle">—</h1>
+          <p class="video-episode" id="videoEpisodeLabel">—</p>
+        </div>
+
+        <!-- Uploader & date bar -->
+        <div class="video-info-bar">
+          <span id="uploaderBar" style="display:flex;align-items:center;gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span id="uploaderName">—</span>
+          </span>
+          <span id="dateBar" style="display:flex;align-items:center;gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span id="uploadDate">—</span>
+          </span>
+        </div>
+
+        <!-- ▸ iFrame player -->
+        <div class="iframe-wrapper" id="iframeWrapper">
+          <div class="iframe-loading" id="iframeLoading">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">Memuat server video…</p>
+          </div>
+          <iframe id="videoFrame" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"
+            referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+            src=""></iframe>
+          <video id="videoPlayer" class="hidden" playsinline preload="metadata"></video>
+
+          <div id="videoBuffering" class="video-buffering hidden">
+            <div class="loader-spinner"></div>
+          </div>
+
+          <div id="videoControls" class="video-controls hidden">
+            <!-- Central Play/Pause Button -->
+            <button id="btnCenterPlayPause" class="center-play-btn" title="Play/Pause">
+              <svg id="centerPlayIcon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              <svg id="centerPauseIcon" class="hidden" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+              </svg>
+            </button>
+
+            <!-- Double tap zone feedback -->
+            <div id="seekRipple" class="seek-ripple hidden">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                id="seekRippleIcon"></svg>
+              <span id="seekRippleText">10s</span>
+            </div>
+
+            <!-- Gradient overlay for controls visibility -->
+            <div class="controls-gradient"></div>
+
+            <div class="controls-bottom">
+              <div class="progress-wrap">
+                <div class="progress-buffer" id="progressBuffer"></div>
+                <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0" step="0.1">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+
+              <div class="controls-toolbar">
+                <button id="btnPlayPause" class="ctrl-btn" title="Play/Pause">
+                  <svg id="iconPlay" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  <svg id="iconPause" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                </button>
+                <div class="time-display">
+                  <span id="currentTime">00:00</span> / <span id="totalTime">00:00</span>
+                </div>
+                <div style="flex:1"></div>
+                <button id="btnMute" class="ctrl-btn" title="Mute/Unmute">
+                  <svg id="iconVol" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                  <svg id="iconMute" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button id="btnCustomFs" class="btn-custom-fs" title="Fullscreen" aria-label="Fullscreen">
+            <svg id="iconFsEnter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+            </svg>
+            <svg id="iconFsExit" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" class="hidden">
+              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- ▸ Server selector -->
+        <div class="server-controls">
+          <p class="server-label">Pilih Server</p>
+          <select id="serverSelect" class="server-select">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+
+        <!-- ▸ Navigation buttons -->
+        <div class="episode-nav">
+          <button class="nav-btn" id="btnPrev" disabled>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M19 12H5" />
+              <path d="m12 5-7 7 7 7" />
+            </svg>
+            Preview
+          </button>
+
+          <button class="nav-btn all-ep" id="btnAllEp">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+            All Episode
+          </button>
+
+          <button class="nav-btn" id="btnNext" disabled>
+            Next
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ▸ Anime info section -->
+      <section class="anime-info-section">
+        <img class="info-cover" id="infoCover" src="" alt="cover" loading="lazy" />
+        <div class="info-details">
+          <div>
+            <div class="info-label">Judul</div>
+            <p class="info-main-title" id="infoTitle">—</p>
+            <p class="info-sub-title" id="infoTitleEn">—</p>
+          </div>
+          <div>
+            <div class="info-label">Genre</div>
+            <div class="info-tags" id="infoGenre"></div>
+          </div>
+          <div>
+            <div class="info-label">Sinopsis</div>
+            <p class="info-synopsis" id="infoSynopsis">—</p>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /streamContent -->
+
+    <!-- Error state -->
+    <div class="error-state hidden" id="streamError">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 8v4m0 4h.01" />
+      </svg>
+      <h3>Konten Tidak Ditemukan</h3>
+      <p>Data anime atau episode ini tidak tersedia di database kami.</p>
+      <a href="index.html" class="btn-primary" style="display:inline-block;margin-top:4px">Kembali ke Home</a>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════ EPISODE MODAL ═══════════════ -->
+  <div class="modal-overlay" id="episodeModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Semua Episode</h2>
+        <button class="modal-close" id="modalClose" aria-label="Tutup">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="episode-list" id="episodeList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="site-footer">
+    This site does not store any files on it's server. All contents are provided by non-affiliated third parties.
+  </footer>
+
+  <script src="streaming.js"></script>
+</body>
+
+</html>
